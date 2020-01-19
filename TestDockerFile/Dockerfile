@@ -16,4 +16,4 @@ RUN dotnet publish "TestDockerFile.csproj" -c Release -o /app
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app .
-ENTRYPOINT ["dotnet", "TestDockerFile.dll"]
+ENTRYPOINT ["Program", "TestDockerFile.dll"]
