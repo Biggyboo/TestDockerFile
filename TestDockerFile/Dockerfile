@@ -1,19 +1,17 @@
-FROM microsoft/dotnet:2.1-aspnetcore-runtime AS base
+# First stage of multi-stage build
+FROM microsoft/aspnetcore-build AS build-env
 WORKDIR /app
-EXPOSE 80
 
-FROM microsoft/dotnet:2.1-sdk AS build
-WORKDIR /src
-COPY ["TestDockerFile.csproj", "TestDockerFile/"]
-RUN dotnet restore "TestDockerFile/TestDockerFile.csproj"
-COPY . .
-WORKDIR "/src/TestDockerFile"
-RUN dotnet build "TestDockerFile.csproj" -c Release -o /app
+# copy the contents of agent working directory on host to workdir in container
+COPY . ./
 
-FROM build AS publish
-RUN dotnet publish "TestDockerFile.csproj" -c Release -o /app
+# dotnet commands to build, test, and publish
+RUN dotnet restore
+RUN dotnet build -c Release
+RUN dotnet publish -c Release -o out
 
-FROM base AS final
+# Second stage - Build runtime image
+FROM microsoft/aspnetcore
 WORKDIR /app
-COPY --from=publish /app .
+COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "TestDockerFile.dll"]
